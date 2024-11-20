@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      MODULE: ${{ secrets.MODULE}}
+      MODULE: mayo
       USERNAME: ${{ secrets.USERNAME }}
       PASSWORD: ${{ secrets.PASSWORD }}
       DELAY_START_MINS: 0
