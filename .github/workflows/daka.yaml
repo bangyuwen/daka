@@ -2,8 +2,8 @@ name: Daka
 
 on:
   schedule:
-    - cron: '33 1 * * 1-5'
-    - cron: '15 11 * * 1-5'
+    - cron: '0 1 * * 1-5'
+    - cron: '0 11 * * 1-5'
 
 jobs:
   daka:
