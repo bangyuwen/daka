@@ -2,7 +2,7 @@ name: Daka
 
 on:
   schedule:
-    - cron: '0 2 * * *'
+    - cron: '0 1 * * *'
     - cron: '10 11 * * *'
 
 jobs:
@@ -30,7 +30,7 @@ jobs:
         run: npm install
 
       - name: Daka gogo
-        if: github.event.schedule == '0 2 * * *'
+        if: github.event.schedule == '0 1 * * *'
         run: node src/index.js S > result.md
 
       - name: Daka bye
