@@ -1,6 +1,7 @@
 name: Daka
 
 on:
+  workflow_dispatch:
   schedule:
     - cron: '0 1 * * *'
     - cron: '10 11 * * *'
