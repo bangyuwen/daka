@@ -7,7 +7,7 @@ const {
   HOUR,
   MINUTE,
   checkPersonalEvents,
-} = require('../resource');
+} = require('../utils/resource');
 
 const SESSION_LIFE_TIME = Math.floor(TODAY.getTime() / 1000) + 1800; // copy from femas javascript
 
