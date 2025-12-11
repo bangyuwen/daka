@@ -1,51 +1,64 @@
 # Daka - Automated Attendance System
 
 ## Project Overview
+
 Automated punch-in/punch-out system that checks holidays and personal events before clocking attendance.
 
 ## Tech Stack
+
+- **Language**: TypeScript
 - **Runtime**: Node.js
-- **Testing**: Jest (`npm test`)
+- **Testing**: Jest with ts-jest (`npm test`)
 - **Formatting**: Prettier
 - **Dependencies**: cheerio (HTML parsing), date-fns (dates), dotenv (env)
 
 ## Project Structure
+
 ```
 src/
-├── index.js          # Entry point, handles CLI args and orchestration
-├── daka.js           # Core Daka class with punch logic and retry
-├── env.js            # Environment variable parsing with defaults
-├── modules/          # Attendance system adapters
-│   └── mayo.js       # Mayo integration
+├── index.ts          # Entry point, CLI args, module factory
+├── daka.ts           # Core Daka class with punch logic and retry
+├── env.ts            # Environment variable parsing
+├── constants.ts      # Typed constants (PUNCH_TYPE, WORK_HOURS, etc.)
+├── modules/
+│   ├── types.ts      # DakaModule interface
+│   └── mayo.ts       # Mayo integration
 ├── utils/
-│   └── resource.js   # Date utilities, delay, sleep helpers
+│   └── resource.ts   # Date utilities, event checking helpers
 └── test/
-    └── daka.test.js  # Unit tests for checkPersonalEvents
+    └── daka.test.ts  # Unit tests
 ```
 
 ## Commands
+
 | Command | Description |
 |---------|-------------|
 | `npm test` | Run Jest tests |
-| `node src/index.js S` | Manual punch-in (Start) |
-| `node src/index.js E` | Manual punch-out (End) |
+| `npm run build` | Compile TypeScript to dist/ |
+| `npm run dev` | Run with ts-node |
+| `npm start` | Run compiled JS |
 
 ## Environment Variables
+
 Required: `MODULE`, `USERNAME`, `PASSWORD`
 Optional: `MODULE_OPTIONS`, `DELAY_START_MINS`, `DELAY_END_MINS`, `IMMEDIATE_DAKA`, `MAX_RETRY_COUNT`
 
-## Key Concepts
-- **punchType**: `S` (Start/in) or `E` (End/out) - auto-determined by time if not specified
-- **Modules**: Each module implements `login()`, `logout()`, `checkDakaDay()`, `punch()`
-- **CST Timezone**: Uses UTC+8 (Taiwan timezone), offset = -480 minutes
+## Key Types
+
+```ts
+type PunchType = 'S' | 'E';  // Start (in) or End (out)
+
+interface DakaModule {
+  login(credentials): Promise<void>;
+  logout(): Promise<void>;
+  checkDakaDay(options): Promise<boolean>;
+  punch(options): Promise<void>;
+}
+```
 
 ## Code Patterns
-- Async/await for all HTTP operations
-- Cheerio for HTML parsing of response pages
-- Random delay before punching to simulate natural behavior
-- Retry mechanism with exponential backoff on failure
 
-## Testing
-- Tests focus on `checkPersonalEvents` utility function
-- Test data uses fixed dates (2022) for deterministic results
-- Run `npm test` before committing changes
+- Strict TypeScript with `as const` for type-safe constants
+- `DakaModule` interface for pluggable attendance systems
+- Small, focused functions (<20 lines) in resource.ts
+- Module factory pattern in index.ts (avoids dynamic require)
