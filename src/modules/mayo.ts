@@ -8,7 +8,7 @@ import {
   HOUR,
   getCSTDate,
 } from '../utils/resource';
-import type { DakaModule, LoginCredentials, PunchOptions } from './types';
+import type { DakaModule } from './types';
 
 const CALENDAR_DAY_OFF_IDS = ['CY00003', 'CY00004'];
 const ATTENDANCE_TYPE = { PUNCH_IN: 1, PUNCH_OUT: 2 } as const;
@@ -49,19 +49,17 @@ interface TokenResponse {
 class MayoModule implements DakaModule {
   private cookie = '';
 
-  async login({ username, password }: LoginCredentials): Promise<void> {
-    // Get the CSRF token
-    const res1 = await fetch('https://auth.mayohr.com/HRM/Account/Login');
-    this.cookie = parseCookies(res1.headers.getSetCookie());
-    const html = await res1.text();
+  private async getCsrfToken(): Promise<string> {
+    const res = await fetch('https://auth.mayohr.com/HRM/Account/Login');
+    this.cookie = parseCookies(res.headers.getSetCookie());
+    const html = await res.text();
     const $ = cheerio.load(html);
     const csrfToken = $('[name=__RequestVerificationToken]').attr('value');
+    if (!csrfToken) throw new Error('Failed to get CSRF token');
+    return csrfToken;
+  }
 
-    if (!csrfToken) {
-      throw new Error('Failed to get CSRF token');
-    }
-
-    // Login
+  private async authenticate(csrfToken: string, username: string, password: string): Promise<string> {
     const body = new URLSearchParams();
     body.append('__RequestVerificationToken', csrfToken);
     body.append('grant_type', 'password');
@@ -69,27 +67,30 @@ class MayoModule implements DakaModule {
     body.append('userName', username);
     body.append('userStatus', '1');
 
-    const res2 = await fetch('https://auth.mayohr.com/Token', {
+    const res = await fetch('https://auth.mayohr.com/Token', {
       method: 'POST',
       headers: { cookie: this.cookie },
       body,
     });
-    this.cookie += parseCookies(res2.headers.getSetCookie());
+    this.cookie += parseCookies(res.headers.getSetCookie());
 
-    const { code } = (await res2.json()) as TokenResponse;
-    if (!code) {
-      throw new Error('Failed to get auth code');
-    }
+    const { code } = (await res.json()) as TokenResponse;
+    if (!code) throw new Error('Failed to get auth code');
+    return code;
+  }
 
-    // Get session cookie
-    const res3 = await fetch(
+  private async getSessionCookie(code: string): Promise<void> {
+    const res = await fetch(
       `https://authcommon.mayohr.com/api/auth/checkticket?code=${code}`,
-      {
-        method: 'GET',
-        headers: { cookie: this.cookie },
-      }
+      { headers: { cookie: this.cookie } }
     );
-    this.cookie += parseCookies(res3.headers.getSetCookie());
+    this.cookie += parseCookies(res.headers.getSetCookie());
+  }
+
+  async login({ username, password }: { username: string; password: string }): Promise<void> {
+    const csrfToken = await this.getCsrfToken();
+    const code = await this.authenticate(csrfToken, username, password);
+    await this.getSessionCookie(code);
   }
 
   async logout(): Promise<void> {
@@ -99,7 +100,7 @@ class MayoModule implements DakaModule {
     });
   }
 
-  async checkDakaDay({ punchType }: PunchOptions): Promise<boolean> {
+  async checkDakaDay({ punchType }: { punchType: PunchType }): Promise<boolean> {
     const dakaDay = formatDate(TODAY);
     const year = TODAY.getUTCFullYear();
     const month = TODAY.getUTCMonth() + 1;
@@ -157,11 +158,7 @@ class MayoModule implements DakaModule {
     return true;
   }
 
-  async punch({ punchType }: PunchOptions): Promise<void> {
-    console.log(punchType === PUNCH_TYPE.END ? 'bye' : 'gogo');
-    console.log("✅ remember to commit your today's work!!!!!");
-
-    // Get location
+  async punch({ punchType }: { punchType: PunchType }): Promise<string> {
     const res1 = await fetch(
       'https://apolloxe.mayohr.com/backend/pt/api/locations',
       {
@@ -177,7 +174,6 @@ class MayoModule implements DakaModule {
 
     const { PunchesLocationId, Latitude, Longitude } = Data[0];
 
-    // Punch
     const res2 = await fetch('https://pt.mayohr.com/api/checkin/punch/locate', {
       method: 'POST',
       headers: {
@@ -201,11 +197,9 @@ class MayoModule implements DakaModule {
       throw new Error(`Punch failed: ${JSON.stringify(punchResult)}`);
     }
 
-    const punchTime = getCSTDate(new Date(punchResult.Data.punchDate))
+    return getCSTDate(new Date(punchResult.Data.punchDate))
       .toTimeString()
       .split(' ')[0];
-
-    console.log(`daka success, time: ${punchTime}`);
   }
 }
 

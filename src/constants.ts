@@ -13,7 +13,3 @@ export const WORK_HOURS = {
 export const CST_OFFSET_MINUTES = -480;
 export const RETRY_DELAY_MS = 3000;
 export const PUNCH_WINDOW_MINUTES = 60;
-export const WORK_DAY_HOURS = 9;
-
-export const ALLOWED_MODULES = ['mayo'] as const;
-export type ModuleName = (typeof ALLOWED_MODULES)[number];

@@ -3,7 +3,6 @@ import {
   CST_OFFSET_MINUTES,
   PUNCH_TYPE,
   WORK_HOURS,
-  WORK_DAY_HOURS,
   PUNCH_WINDOW_MINUTES,
   type PunchType,
 } from '../constants';
@@ -54,29 +53,12 @@ export const TODAY = getCSTDate(UTC_TODAY);
 export const HOUR = TODAY.getUTCHours();
 
 // Delay utilities
-function getRandomSeconds(minMins: number, maxMins: number): number {
-  const minSecs = minMins * 60;
-  const maxSecs = maxMins * 60;
-  return Math.floor(Math.random() * (maxSecs - minSecs + 1)) + minSecs;
-}
-
 export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-interface DelayOptions {
-  punchType: PunchType;
-  delayStartMins: number;
-  delayEndMins: number;
-}
-
-export function delay(options: DelayOptions): Promise<void> {
-  const { punchType, delayStartMins, delayEndMins } = options;
-  const delaySecs =
-    punchType === PUNCH_TYPE.END
-      ? getRandomSeconds(delayStartMins, delayEndMins)
-      : getRandomSeconds(0, delayStartMins);
-
+export function delay(maxMins: number): Promise<void> {
+  const delaySecs = Math.floor(Math.random() * maxMins * 60);
   if (delaySecs) {
     console.log(`daka delay ${(delaySecs / 60).toFixed(2)} mins`);
   }
@@ -133,10 +115,6 @@ function expandMultiDayEvent(event: CalendarEvent): DailyEvent[] {
   });
 }
 
-function isAllDayEvent(startHour: string, endHour: string): boolean {
-  return Number(endHour) - Number(startHour) >= WORK_DAY_HOURS;
-}
-
 function isWithinPunchWindow(
   event: DailyEvent,
   hour: string,
@@ -185,10 +163,6 @@ export function checkPersonalEvents(
 
   for (const event of expandedEvents) {
     if (event.date !== today) continue;
-
-    if (isAllDayEvent(event.startHour, event.endHour)) {
-      return true;
-    }
 
     if (punchType && isWithinPunchWindow(event, hour, min, punchType as PunchType)) {
       return true;

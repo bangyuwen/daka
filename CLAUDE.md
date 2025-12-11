@@ -40,8 +40,8 @@ src/
 
 ## Environment Variables
 
-Required: `MODULE`, `USERNAME`, `PASSWORD`
-Optional: `MODULE_OPTIONS`, `DELAY_START_MINS`, `DELAY_END_MINS`, `IMMEDIATE_DAKA`, `MAX_RETRY_COUNT`
+Required: `USERNAME`, `PASSWORD`
+Optional: `MAX_DELAY_MINS` (default 30), `MAX_RETRY_COUNT` (default 3)
 
 ## Key Types
 
@@ -52,7 +52,14 @@ interface DakaModule {
   login(credentials): Promise<void>;
   logout(): Promise<void>;
   checkDakaDay(options): Promise<boolean>;
-  punch(options): Promise<void>;
+  punch(options): Promise<string>;  // returns punch time
+}
+
+interface DakaResult {
+  status: 'success' | 'skipped' | 'failed';
+  punchType: PunchType;
+  time?: string;
+  reason?: string;
 }
 ```
 
@@ -61,4 +68,3 @@ interface DakaModule {
 - Strict TypeScript with `as const` for type-safe constants
 - `DakaModule` interface for pluggable attendance systems
 - Small, focused functions (<20 lines) in resource.ts
-- Module factory pattern in index.ts (avoids dynamic require)

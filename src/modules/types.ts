@@ -1,17 +1,8 @@
 import type { PunchType } from '../constants';
 
-export interface LoginCredentials {
-  username: string;
-  password: string;
-}
-
-export interface PunchOptions {
-  punchType: PunchType;
-}
-
 export interface DakaModule {
-  login(credentials: LoginCredentials): Promise<void>;
+  login(credentials: { username: string; password: string }): Promise<void>;
   logout(): Promise<void>;
-  checkDakaDay(options: PunchOptions): Promise<boolean>;
-  punch(options: PunchOptions): Promise<void>;
+  checkDakaDay(options: { punchType: PunchType }): Promise<boolean>;
+  punch(options: { punchType: PunchType }): Promise<string>; // returns punch time
 }
