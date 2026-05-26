@@ -25,9 +25,9 @@ jobs:
       - run: npm install
 
       - name: Check in
-        if: github.event.schedule == '0 2 * * *'
+        if: github.event.schedule == '0 1 * * *'
         run: npx ts-node src/index.ts S
 
       - name: Check out
-        if: github.event.schedule == '0 11 * * *'
+        if: github.event.schedule == '10 11 * * *'
         run: npx ts-node src/index.ts E
