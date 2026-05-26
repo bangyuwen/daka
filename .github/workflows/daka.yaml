@@ -2,8 +2,8 @@ name: Daka
 
 on:
   schedule:
-    - cron: '0 2 * * *'   # 10:00 AM UTC+8 - check in
-    - cron: '0 11 * * *' # 7:00 PM UTC+8 - check out
+    - cron: '0 1 * * *'   # 9:00 AM UTC+8 - check in
+    - cron: '10 11 * * *' # 7:10 PM UTC+8 - check out
 
 jobs:
   daka:
@@ -25,9 +25,9 @@ jobs:
       - run: npm install
 
       - name: Check in
-        if: github.event.schedule == '0 2 * * *'
+        if: github.event.schedule == '0 1 * * *'
         run: npx ts-node src/index.ts S
 
       - name: Check out
-        if: github.event.schedule == '0 11 * * *'
+        if: github.event.schedule == '10 11 * * *'
         run: npx ts-node src/index.ts E
