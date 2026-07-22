@@ -4,6 +4,15 @@ on:
   schedule:
     - cron: '0 1 * * *'   # 9:00 AM UTC+8 - check in
     - cron: '10 11 * * *' # 7:10 PM UTC+8 - check out
+  workflow_dispatch:
+    inputs:
+      punch_type:
+        description: 'Punch type'
+        required: true
+        type: choice
+        options:
+          - S
+          - E
 
 jobs:
   daka:
@@ -25,9 +34,9 @@ jobs:
       - run: npm install
 
       - name: Check in
-        if: github.event.schedule == '0 1 * * *'
+        if: github.event.schedule == '0 1 * * *' || (github.event_name == 'workflow_dispatch' && github.event.inputs.punch_type == 'S')
         run: npx ts-node src/index.ts S
 
       - name: Check out
-        if: github.event.schedule == '10 11 * * *'
+        if: github.event.schedule == '10 11 * * *' || (github.event_name == 'workflow_dispatch' && github.event.inputs.punch_type == 'E')
         run: npx ts-node src/index.ts E
